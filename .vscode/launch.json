@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "type": "cortex-debug",
+            "request": "launch",
+            "name": "Debug: JLINK",
+            "servertype": "jlink",
+            "interface": "swd",
+            "executable": "build/cross/arm/release/application.elf",
+            "runToEntryPoint": "main",
+            "device": "STM32F103C8",
+            "toolchainPrefix": "arm-none-eabi",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            }
+        }
+    ]
+}

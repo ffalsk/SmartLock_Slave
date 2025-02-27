@@ -1,0 +1,7 @@
+{
+    "clangd.arguments": [
+        "--query-driver=C:\\arm-none-eabi-gcc\\bin\\arm-none-eabi-g++.exe",
+        "--header-insertion=never",
+        "--compile-commands-dir=build"
+    ],
+}
