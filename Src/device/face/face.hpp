@@ -109,7 +109,7 @@ public:
     void bind_finger(device::finger* finger) { finger_ = finger; }
 
     void identify() {
-        if (app::human_detected) {
+        if (app::human_detected && (!app::can_comm_instance->get_power_save_flag())) {
             identify_daemon_.Resume();
         } else {
             identify_daemon_.Pause();

@@ -39,6 +39,7 @@ public:
         return false;
     }
     [[nodiscard]] bool get_finger_day_flag() const { return rx_package_.finger_day_flag; }
+    [[nodiscard]] bool get_power_save_flag() const { return rx_package_.power_save_flag; }
     [[nodiscard]] bool get_face_enroll_flag() {
         if (rx_package_.face_enroll_flag) {
             rx_package_.face_enroll_flag = false;
