@@ -47,10 +47,15 @@ public:
         };
         // clang-format on
         enroll_params params = {};
-        // this->reset();
+        this->reset();
         DWT_Delay(2.5);
         app::can_comm_instance->send_request(request::enroll_prompt);
         DWT_Delay(0.5);
+
+        rx_package.set_zero();
+        // uart_.set_dma_rx_buffer(reinterpret_cast<uint8_t*>(&rx_package));
+        uart_.ReceiveDMAAuto();
+
         for (const auto& dir : directions) {
             enroll_unexpected_exit_ = false;
             enroll_single_success_  = false;
@@ -109,7 +114,8 @@ public:
     void bind_finger(device::finger* finger) { finger_ = finger; }
 
     void identify() {
-        if (app::human_detected && (!app::can_comm_instance->get_power_save_flag())) {
+        if (app::human_detected && (!app::can_comm_instance->get_power_save_flag())
+            && (!app::can_comm_instance->get_door_open_flag())) {
             identify_daemon_.Resume();
         } else {
             identify_daemon_.Pause();
@@ -139,6 +145,7 @@ public:
 
     [[nodiscard]] bool is_init_finished() const { return Init_finished_; }
     [[nodiscard]] face_states get_face_state() const { return face_state_; }
+    [[nodiscard]] bool is_enrolling() const { return is_enrolling_; }
     [[nodiscard]] bool is_waiting_identify() {
         if (waiting_identify_) {
             waiting_identify_ = false;
@@ -226,6 +233,7 @@ private:
     }
     void human_detect_IT_set() {
         app::human_detected = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14);
+        app::can_comm_instance->send_status(0x01, app::human_detected);
         if (app::human_detected) {
             waiting_identify_ = true;
         }
@@ -246,7 +254,7 @@ private:
     face_states face_state_ = face_states::idle;
     bool Init_finished_     = false;
 
-    bool waiting_identify_ = false;
+    bool waiting_identify_ = true;
     bool waiting_decode_   = false;
 
     uint16_t size                 = 0;

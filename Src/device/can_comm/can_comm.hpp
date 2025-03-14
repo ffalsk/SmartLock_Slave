@@ -28,21 +28,26 @@ public:
     }
     void send_request(request req) {
         auto tx_data = static_cast<uint8_t>(req);
-        can_.Transmit(&tx_data, sizeof(tx_data));
+        can_.Transmit(&tx_data, sizeof(tx_data), 0x102);
+    }
+    void send_status(uint8_t seq, uint8_t status) {
+        uint8_t tx_data[2] = {seq, status};
+        can_.Transmit(tx_data, sizeof(tx_data), 0x104);
     }
 
     [[nodiscard]] bool get_finger_enroll_flag() {
-        if (rx_package_.finger_enroll_flag) {
-            rx_package_.finger_enroll_flag = false;
+        if (rx_status_.finger_enroll_flag) {
+            rx_status_.finger_enroll_flag = false;
             return true;
         }
         return false;
     }
-    [[nodiscard]] bool get_finger_day_flag() const { return rx_package_.finger_day_flag; }
-    [[nodiscard]] bool get_power_save_flag() const { return rx_package_.power_save_flag; }
+    [[nodiscard]] bool get_finger_day_flag() const { return rx_status_.finger_day_flag; }
+    [[nodiscard]] bool get_power_save_flag() const { return rx_status_.power_save_flag; }
+    [[nodiscard]] bool get_door_open_flag() const { return rx_status_.door_open_flag; }
     [[nodiscard]] bool get_face_enroll_flag() {
-        if (rx_package_.face_enroll_flag) {
-            rx_package_.face_enroll_flag = false;
+        if (rx_status_.face_enroll_flag) {
+            rx_status_.face_enroll_flag = false;
             return true;
         }
         return false;
@@ -52,14 +57,27 @@ public:
 
 private:
     void decode(uint8_t* rx_data, uint8_t length) {
-        if (length != sizeof(rx_package)) {
+        if (length % 2 != 0) {
+            // 数据长度必须是偶数
             return;
         }
-        std::memcpy(&rx_package_, rx_data, length);
+        if (data_locked_) {
+            // 如果数据被锁定，则不进行解码
+            return;
+        }
+        auto len      = length;
+        auto data_ptr = rx_data;
+        while (len > 0) {
+            if (data_ptr[0] <= sizeof(rx_status_)) {
+                reinterpret_cast<uint8_t*>(&rx_status_)[data_ptr[0] - 1] = data_ptr[1];
+            }
+            len -= 2;
+            data_ptr += 2;
+        }
     }
 
-    bool data_locked_      = false;
-    rx_package rx_package_ = {};
+    bool data_locked_    = false;
+    rx_status rx_status_ = {};
     bsp::can<can_comm> can_;
 };
 } // namespace device

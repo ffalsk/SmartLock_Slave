@@ -11,6 +11,9 @@ face face{device::face::face_params()};
 can_comm can_comm{device::can_comm::can_comm_params()};
 
 extern "C" [[noreturn]] void app_main() {
+    static bool last_power_save_flag = false;
+    static bool last_door_open_flag  = false;
+
     can_comm_instance = &can_comm;
     HAL_TIM_Base_Start_IT(&htim4);
     DWT_Init();
@@ -29,8 +32,10 @@ extern "C" [[noreturn]] void app_main() {
     HAL_GPIO_WritePin(
         GPIOB, GPIO_PIN_15, GPIO_PIN_SET); // when the system is ready, turn off status LED
 
+    // DWT_Delay(1);
     // finger.delete_all();
     // face.delete_all();
+    // DWT_Delay(1);
 
     finger.resume_LED();
 
@@ -43,12 +48,24 @@ extern "C" [[noreturn]] void app_main() {
             finger.decode();
         }
 
-        if (face.is_waiting_identify()) {
+        if (can_comm.get_door_open_flag() == false) {
+            if (face.is_waiting_identify()) {
+                face.identify();
+            }
+            if (face.is_waiting_decode()) {
+                face.decode();
+            }
+        }
+
+        // when system status changed, identify
+        if (last_power_save_flag == true && can_comm.get_power_save_flag() == false) {
             face.identify();
         }
-        if (face.is_waiting_decode()) {
-            face.decode();
+        if (last_door_open_flag == true && can_comm.get_door_open_flag() == false) {
+            face.identify();
         }
+        last_power_save_flag = can_comm.get_power_save_flag();
+        last_door_open_flag  = can_comm.get_door_open_flag();
 
         // success handle
         if (identify_success == true) {
