@@ -46,9 +46,9 @@ public:
 
     void auto_enroll(finger_auto_enroll_params data) {
         LED_daemon_.Pause();
-        DWT_Delay(2.5);
+        DWT_Delay(3.5);
         app::can_comm_instance->send_request(request::enroll_prompt);
-        DWT_Delay(0.5);
+        DWT_Delay(1.5);
         data.ID             = ++user_count_;
         enroll_times_count_ = data.times;
         enroll_success_     = false;
